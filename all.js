@@ -16,7 +16,13 @@ const signupNameErr = document.querySelector(".signup_name_err")
 const signupPswErr = document.querySelector(".signup_psw_err")
 const signupPsw2Err = document.querySelector(".signup_psw2_err")
 
-// check signup input Error
+// API
+const apiURL = "https://todoo.5xcamp.us"
+let token = "" ; 
+let nickname = "";
+
+
+// 點擊註冊
 signupBtn.addEventListener("click",function(e){
     e.preventDefault();
     signupInfo.email = signupEmail.value;
@@ -29,6 +35,7 @@ signupBtn.addEventListener("click",function(e){
     }
 })
 
+// 檢查註冊內容
 function signupCheck(){
     // 初始化
     signupEmailErr.textContent = "";
@@ -57,3 +64,74 @@ function signupCheck(){
         return true;
     }
 }
+
+// 傳送註冊API
+function signup() {
+    axios.post(`${apiURL}/users`, {
+        "user": {
+            "email": signupInfo.email,
+            "nickname": signupInfo.name,
+            "password": signupInfo.psw
+          }
+    })
+
+    // 取得token與nickname
+    .then(res =>{
+        token = res.headers.authorization
+        nickname = res.data.nickname
+    })
+
+    // 清除input
+    .then(res => {
+        clearInput(signupEmail)
+        clearInput(signupName)
+        clearInput(signupPassword)
+        clearInput(signupPassword2)
+    })
+
+    // 彈跳成功視窗
+    .then(res=>{
+        let timerInterval;
+        Swal.fire({
+        title: "註冊成功",
+        icon:"success",
+        html: "正在創建帳號中...",
+        timer: 2000,
+        timerProgressBar: true,
+        didOpen: () => {
+            Swal.showLoading();
+            const timer = Swal.getPopup().querySelector("b");
+            timerInterval = setInterval(() => {
+            }, 100);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+        }).then((result) => {
+        /* Read more about handling dismissals below */
+        if (result.dismiss === Swal.DismissReason.timer) {
+            console.log("I was closed by the timer");
+        }
+        });
+    })
+
+    // 跳轉頁面
+    .then(res=>{
+        switchPage()
+    })
+
+    // 彈跳失敗視窗
+    .catch(error => {
+        Swal.fire({
+            title: "註冊失敗",
+            text: error.response.data.error,
+            icon: "error"
+          })
+        })
+}
+
+// 清除input內容
+function clearInput(inputname){
+    inputname.value = "";
+}
+
